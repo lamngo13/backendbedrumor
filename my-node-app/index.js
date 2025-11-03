@@ -1,8 +1,12 @@
 import express from "express";
+import cors from "cors"; // import the CORS middleware
 
 const app = express();
 
-// Middleware to parse JSON (optional, but useful if your frontend sends JSON)
+// Enable CORS for all origins (or you can restrict to your frontend URL)
+app.use(cors());
+
+// Middleware to parse JSON
 app.use(express.json());
 
 // Root route
@@ -10,16 +14,14 @@ app.get("/", (req, res) => {
   res.send("Hello from Node.js on Vercel!");
 });
 
-// Example API route
+// Example GET API route
 app.get("/api/data", (req, res) => {
   res.json({ message: "This is some data from your API!" });
 });
 
-// Example POST route
+// Example POST API route
 app.post("/api/echo", (req, res) => {
-  // Echo back JSON sent from frontend
   res.json({ received: req.body });
 });
 
-// Export the app as a Vercel serverless function
 export default app;
