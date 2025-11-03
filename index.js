@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 require('dotenv').config();
 
 const app = express();
@@ -189,7 +190,7 @@ app.post('/api/texts', checkSecret, (req, res) => {
     
     const data = readTexts();
     const newText = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       title: title || 'Untitled',
       content: content,
       createdAt: new Date().toISOString(),

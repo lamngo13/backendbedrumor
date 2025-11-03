@@ -50,7 +50,7 @@ Returns an array of all text entities.
 ```json
 [
   {
-    "id": "1699123456789",
+    "id": "932cbecf-1874-4475-87e6-d533e448e37f",
     "title": "My First Text",
     "content": "This is the content",
     "createdAt": "2023-11-04T12:34:56.789Z",
@@ -139,7 +139,7 @@ Create a new text entity.
 **Response:**
 ```json
 {
-  "id": "1699123456789",
+  "id": "932cbecf-1874-4475-87e6-d533e448e37f",
   "title": "My Title",
   "content": "My content here",
   "createdAt": "2023-11-04T12:34:56.789Z",
@@ -197,7 +197,7 @@ curl -X POST http://localhost:3000/api/images \
   -F "image=@photo.jpg"
 
 # Update a text
-curl -X PUT http://localhost:3000/api/texts/1699123456789 \
+curl -X PUT http://localhost:3000/api/texts/932cbecf-1874-4475-87e6-d533e448e37f \
   -H "Content-Type: application/json" \
   -H "x-secret: your-secret-key" \
   -d '{"content": "Updated content"}'
