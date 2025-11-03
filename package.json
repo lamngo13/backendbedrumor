@@ -1,14 +1,17 @@
 {
   "name": "backendbedrumor",
   "version": "1.0.0",
-  "description": "",
+  "description": "Node.js backend for image and text storage with REST API",
   "main": "index.js",
+  "engines": {
+    "node": ">=14.17.0"
+  },
   "scripts": {
     "start": "node index.js",
     "dev": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": ["api", "backend", "image-storage", "express"],
   "author": "",
   "license": "ISC",
   "dependencies": {

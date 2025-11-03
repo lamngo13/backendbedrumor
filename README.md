@@ -90,7 +90,9 @@ Returns the image file.
 ### Protected Endpoints (Require Secret Authentication)
 
 For all protected endpoints, include the secret in one of these ways:
-- Header: `x-secret: your-secret-key`
+- Header: `x-secret: your-secret-key` (recommended - most secure)
+- Body: `{ "secret": "your-secret-key" }` (secure for POST/PUT requests)
+- Query parameter: `?secret=your-secret-key` (⚠️ less secure - may be logged)
 - Query parameter: `?secret=your-secret-key`
 - Body: `{ "secret": "your-secret-key" }`
 
@@ -209,10 +211,13 @@ curl -X DELETE http://localhost:3000/api/images/filename.jpg \
 
 ## Security
 
-- The secret key should be kept confidential
+- The secret key should be kept confidential and stored in the `.env` file
+- Use header or body authentication methods (query parameter may be logged)
 - Images are filtered to only allow common image formats (JPEG, PNG, GIF, WebP)
-- File size limit is set to 10MB
+- File size limit is set to 10MB per upload
+- Path traversal protection prevents directory access
 - All dependencies are checked for vulnerabilities
+- Requires Node.js 14.17.0 or later for UUID support
 
 ## File Storage
 
