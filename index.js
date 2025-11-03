@@ -119,8 +119,13 @@ app.get('/api/images', (req, res) => {
 // Get a specific image
 app.get('/api/images/:filename', (req, res) => {
   try {
-    const filename = req.params.filename;
+    const filename = path.basename(req.params.filename);
     const filepath = path.join(imagesDir, filename);
+    
+    // Ensure the resolved path is within the images directory
+    if (!filepath.startsWith(imagesDir)) {
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
     
     if (fs.existsSync(filepath)) {
       res.sendFile(filepath);
@@ -154,8 +159,13 @@ app.post('/api/images', checkSecret, upload.single('image'), (req, res) => {
 // Delete an image
 app.delete('/api/images/:filename', checkSecret, (req, res) => {
   try {
-    const filename = req.params.filename;
+    const filename = path.basename(req.params.filename);
     const filepath = path.join(imagesDir, filename);
+    
+    // Ensure the resolved path is within the images directory
+    if (!filepath.startsWith(imagesDir)) {
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
     
     if (fs.existsSync(filepath)) {
       fs.unlinkSync(filepath);
@@ -272,5 +282,4 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
-  console.log(`Secret key: ${SECRET}`);
 });
