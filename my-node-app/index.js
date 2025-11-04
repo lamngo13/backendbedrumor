@@ -1,25 +1,27 @@
 import express from "express";
-import cors from "cors";
+import cors from "cors"; // import the CORS middleware
 
 const app = express();
 
-// Allow all origins (dev only)
-app.use(cors({ origin: "*" }));
+// Enable CORS for all origins (or you can restrict to your frontend URL)
+app.use(cors());
+
+// Middleware to parse JSON
 app.use(express.json());
 
-// Routes
+// Root route
 app.get("/", (req, res) => {
-  res.send("Hello from Node.js on Render!");
+  res.send("Hello from Node.js on Vercel!");
 });
 
+// Example GET API route
 app.get("/api/data", (req, res) => {
-  res.json({ message: "This is public data!" });
+  res.json({ message: "This is some data from your API!" });
 });
 
+// Example POST API route
 app.post("/api/echo", (req, res) => {
   res.json({ received: req.body });
 });
 
-// Listen on the port Render provides or default 3000
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+export default app;
