@@ -3,22 +3,18 @@ const cors = require("cors");
 
 const app = express();
 
-// ✅ Allow any origin, any method, any headers
 app.use(cors({
   origin: "*",
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["*"],
+  credentials: true,
 }));
 
-// Handle preflight requests explicitly
-app.options("*", cors());
-
-const port = process.env.PORT || 8080;
+app.use(express.json());
 
 app.get("/", (req, res) => {
   res.send("Backend connected successfully!");
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+module.exports = (req, res) => {
+  // Let Express handle the request
+  app(req, res);
+};
