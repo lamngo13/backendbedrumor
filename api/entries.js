@@ -5,19 +5,25 @@ const BLOB_FILENAME = 'entries.json';
 // Helper to read entries from Vercel Blob
 async function readEntries() {
   try {
+    if (!process.env.BLOB_READ_WRITE_TOKEN || !process.env.BLOB_STORE_ID) {
+      console.warn('BLOB_READ_WRITE_TOKEN or BLOB_STORE_ID missing, returning empty array');
+      return [];
+    }
+
+    const blobUrl = `https://${process.env.BLOB_STORE_ID}.public.blob.vercel-storage.com/${BLOB_FILENAME}`;
+
     // Check if blob exists
-    const blobUrl = process.env.BLOB_READ_WRITE_TOKEN 
-      ? `https://${process.env.BLOB_STORE_ID}.public.blob.vercel-storage.com/${BLOB_FILENAME}`
-      : null;
-    
-    if (!blobUrl) return [];
-    
-    // Try to fetch the blob
+    const exists = await head(BLOB_FILENAME, {
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+    }).catch(() => null);
+
+    if (!exists) return []; // blob doesn't exist yet
+
+    // Fetch the blob contents
     const response = await fetch(blobUrl);
     if (!response.ok) return [];
-    
-    const data = await response.text();
-    return JSON.parse(data);
+    const text = await response.text();
+    return JSON.parse(text || '[]');
   } catch (err) {
     console.error('Error reading entries:', err);
     return [];
@@ -27,10 +33,16 @@ async function readEntries() {
 // Helper to write entries to Vercel Blob
 async function writeEntries(entries) {
   try {
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      throw new Error('BLOB_READ_WRITE_TOKEN is missing');
+    }
+
     const blob = await put(BLOB_FILENAME, JSON.stringify(entries, null, 2), {
       access: 'public',
       contentType: 'application/json',
+      token: process.env.BLOB_READ_WRITE_TOKEN,
     });
+
     console.log('Entries saved to blob:', blob.url);
     return blob;
   } catch (err) {
@@ -48,7 +60,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    let entries = await readEntries();
+    const entries = await readEntries();
 
     if (req.method === 'GET') {
       return res.status(200).json({ entries });
@@ -58,9 +70,9 @@ export default async function handler(req, res) {
       const { text } = req.body;
       if (!text) return res.status(400).json({ error: 'Missing text field' });
 
-      const id = Date.now();
-      const newEntry = { id, text };
+      const newEntry = { id: Date.now(), text };
       entries.push(newEntry);
+
       await writeEntries(entries);
 
       return res.status(201).json({ success: true, entry: newEntry });
