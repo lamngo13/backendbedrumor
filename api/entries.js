@@ -1,86 +1,91 @@
-import { put, head } from '@vercel/blob';
+import { get, set } from '@vercel/edge-config';
 
-const BLOB_FILENAME = 'entries.json';
+const EDGE_KEY = 'entries';
 
-// Helper to read entries from Vercel Blob
+// Helper to read entries from Edge Config
 async function readEntries() {
   try {
-    if (!process.env.BLOB_READ_WRITE_TOKEN || !process.env.BLOB_STORE_ID) {
-      console.warn('BLOB_READ_WRITE_TOKEN or BLOB_STORE_ID missing, returning empty array');
-      return [];
-    }
-
-    const blobUrl = `https://${process.env.BLOB_STORE_ID}.public.blob.vercel-storage.com/${BLOB_FILENAME}`;
-
-    // Check if blob exists
-    const exists = await head(BLOB_FILENAME, {
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-    }).catch(() => null);
-
-    if (!exists) return []; // blob doesn't exist yet
-
-    // Fetch the blob contents
-    const response = await fetch(blobUrl);
-    if (!response.ok) return [];
-    const text = await response.text();
-    return JSON.parse(text || '[]');
+    const data = await get(EDGE_KEY);
+    if (!data) return [];
+    return JSON.parse(data);
   } catch (err) {
-    console.error('Error reading entries:', err);
+    console.error('Error reading entries from Edge Config:', err);
     return [];
   }
 }
 
-// Helper to write entries to Vercel Blob
+// Helper to write entries to Edge Config
 async function writeEntries(entries) {
   try {
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      throw new Error('BLOB_READ_WRITE_TOKEN is missing');
-    }
-
-    const blob = await put(BLOB_FILENAME, JSON.stringify(entries, null, 2), {
-      access: 'public',
-      contentType: 'application/json',
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-    });
-
-    console.log('Entries saved to blob:', blob.url);
-    return blob;
+    await set(EDGE_KEY, JSON.stringify(entries));
+    console.log('Entries saved to Edge Config');
   } catch (err) {
-    console.error('Error writing entries:', err);
+    console.error('Error writing entries to Edge Config:', err);
     throw err;
   }
 }
 
-export default async function handler(req, res) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+// Edge function handler
+export const config = {
+  runtime: 'edge', // required for edge config
+};
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
+export default async function handler(req) {
+  const allowedOrigin = '*'; // set your frontend domain if you want, e.g., 'https://bedrumor.com'
+
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': allowedOrigin,
+        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    });
+  }
 
   try {
-    const entries = await readEntries();
+    let entries = await readEntries();
 
     if (req.method === 'GET') {
-      return res.status(200).json({ entries });
+      return new Response(JSON.stringify({ entries }), {
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': allowedOrigin,
+        },
+      });
     }
 
     if (req.method === 'POST') {
-      const { text } = req.body;
-      if (!text) return res.status(400).json({ error: 'Missing text field' });
+      const body = await req.json();
+      const { text } = body;
+      if (!text) {
+        return new Response(JSON.stringify({ error: 'Missing text field' }), {
+          status: 400,
+          headers: { 'Access-Control-Allow-Origin': allowedOrigin, 'Content-Type': 'application/json' },
+        });
+      }
 
       const newEntry = { id: Date.now(), text };
       entries.push(newEntry);
-
       await writeEntries(entries);
 
-      return res.status(201).json({ success: true, entry: newEntry });
+      return new Response(JSON.stringify({ success: true, entry: newEntry }), {
+        status: 201,
+        headers: { 'Access-Control-Allow-Origin': allowedOrigin, 'Content-Type': 'application/json' },
+      });
     }
 
-    return res.status(405).json({ error: 'Method not allowed' });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { 'Access-Control-Allow-Origin': allowedOrigin, 'Content-Type': 'application/json' },
+    });
   } catch (err) {
     console.error('Handler error:', err);
-    return res.status(500).json({ error: 'Server error', details: err.message });
+    return new Response(JSON.stringify({ error: 'Server error', details: err.message }), {
+      status: 500,
+      headers: { 'Access-Control-Allow-Origin': allowedOrigin, 'Content-Type': 'application/json' },
+    });
   }
 }
