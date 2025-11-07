@@ -3,18 +3,17 @@ const cors = require("cors");
 
 const app = express();
 
-app.use(cors({
-  origin: "*",
-  credentials: true,
-}));
-
+// ✅ Use CORS for all routes
+app.use(cors());
 app.use(express.json());
 
+// ✅ Explicitly handle preflight (important for Vercel)
+app.options("*", cors());
+
+// ✅ Your normal routes
 app.get("/", (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*"); // just to be sure
   res.send("Backend connected successfully!");
 });
 
-module.exports = (req, res) => {
-  // Let Express handle the request
-  app(req, res);
-};
+module.exports = app;
