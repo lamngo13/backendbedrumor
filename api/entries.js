@@ -1,3 +1,7 @@
+import { put, get } from '@vercel/blob';
+
+
+
 let entries = []; // in-memory array, resets on redeploy
 
 export default function handler(req, res) {
